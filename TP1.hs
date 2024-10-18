@@ -1,4 +1,4 @@
---import qualified Data.List
+import qualified Data.List
 --import qualified Data.Array
 --import qualified Data.Bits
 
@@ -13,19 +13,29 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 cities :: RoadMap -> [City]
-cities = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+cities roadMap = Data.List.nub [city | (c1, c2, _) <- roadMap, city <- [c1, c2]]
 
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent = undefined
+areAdjacent roadMap c1 c2 = or [(c1 == c3 && c2 == c4) || (c1 == c4 && c2 == c3) | (c3, c4, _) <- roadMap] --quando as duas cidades são a mesma é para retornar true or false (|| (c1 == c2))
 
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance = undefined
+distance roadMap c1 c2 =  case [d | (c3, c4, d) <- roadMap, (c1 == c3 && c2 == c4) || (c1 == c4 && c2 == c3)] of
+    []      -> Nothing
+    (d:_)   -> Just d
 
 adjacent :: RoadMap -> City -> [(City,Distance)]
-adjacent = undefined
+adjacent roadMap c1 = [(c2, d) | c2 <- cities roadMap, Just d <- [distance roadMap c1 c2],  areAdjacent roadMap c2 c1]
 
 pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+pathDistance roadMap [] = Just 0
+pathDistance roadMap [_] = Just 0
+pathDistance roadMap (c1:c2:path) = if areAdjacent roadMap c1 c2
+    then case distance roadMap c1 c2 of
+        Nothing -> Nothing  -- Se não houver distância entre c1 e c2, retorna Nothing
+        Just d  -> case pathDistance roadMap (c2:path) of
+            Nothing  -> Nothing  -- Se não houver distância no caminho subsequente, retorna Nothing
+            Just ds  -> Just (d + ds)  -- Soma a distância atual com a distância acumulada
+    else Nothing 
 
 rome :: RoadMap -> [City]
 rome = undefined
