@@ -35,10 +35,11 @@ pathDistance roadMap (c1:c2:path) = if areAdjacent roadMap c1 c2
         Just d  -> case pathDistance roadMap (c2:path) of
             Nothing  -> Nothing  -- Se não houver distância no caminho subsequente, retorna Nothing
             Just ds  -> Just (d + ds)  -- Soma a distância atual com a distância acumulada
-    else Nothing 
+    else Nothing
 
 rome :: RoadMap -> [City]
-rome = undefined
+rome roadMap = [city | (city, x) <- citiesDegrees, x == maximum[b | (_, b) <- citiesDegrees]]
+    where citiesDegrees = [(city, fromIntegral (length (adjacent roadMap city))) | city <- cities roadMap]
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
