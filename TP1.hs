@@ -1,6 +1,6 @@
 import qualified Data.List
---import qualified Data.Array
---import qualified Data.Bits
+import qualified Data.Array
+import qualified Data.Bits
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -45,7 +45,31 @@ isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
 
 shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath = undefined
+shortestPath roadMap start end
+    | start == end = [[start]]  -- Caso especial onde o ponto inicial é o mesmo que o destino
+    | otherwise    = filterMinPaths (bfs [[start]] roadMap end) roadMap
+
+-- Função BFS para explorar todos os caminhos possíveis
+bfs :: [Path] -> RoadMap -> City -> [Path]
+bfs [] _ _ = [] -- quando não houver mais caminhos na "fila" retorna 
+bfs (currentPath:pathsQueue) roadMap end
+    | last currentPath == end = currentPath : bfs pathsQueue roadMap end -- se o caminho atual tiver chegado ao destino,adiciona-o e continua com o próximo caminho na "fila"
+    | otherwise = bfs (pathsQueue ++ newPaths) roadMap end -- 
+  where
+    currentCity = last currentPath
+    adjacentCities = adjacent roadMap currentCity
+    newPaths = [currentPath ++ [nextCity] | (nextCity, _ ) <- adjacentCities,  nextCity `notElem` currentPath] -- adicionar novos caminhos com base nas cidades adjacentes
+
+-- Função para filtrar os caminhos de menor distância encontrados
+filterMinPaths :: [Path] -> RoadMap -> [Path]
+filterMinPaths paths roadMap =
+    let distances = [d | Just d <- map (pathDistance roadMap) paths]
+    in case distances of
+        [] -> []
+        _  -> let minDist = minimum distances
+              in [path | path <- paths, pathDistance roadMap path == Just minDist]
+
+
 
 travelSales :: RoadMap -> Path
 travelSales = undefined
