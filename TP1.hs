@@ -16,7 +16,7 @@ cities :: RoadMap -> [City]
 cities roadMap = Data.List.nub [city | (c1, c2, _) <- roadMap, city <- [c1, c2]]
 
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent roadMap c1 c2 = or [(c1 == c3 && c2 == c4) || (c1 == c4 && c2 == c3) | (c3, c4, _) <- roadMap] --quando as duas cidades são a mesma é para retornar true or false (|| (c1 == c2))
+areAdjacent roadMap c1 c2 = or [(c1 == c3 && c2 == c4) || (c1 == c4 && c2 == c3) | (c3, c4, w_) <- roadMap] --quando as duas cidades são a mesma é para retornar true or false (|| (c1 == c2))
 
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance roadMap c1 c2 =  case [d | (c3, c4, d) <- roadMap, (c1 == c3 && c2 == c4) || (c1 == c4 && c2 == c3)] of
@@ -42,7 +42,11 @@ rome roadMap = [city | (city, x) <- citiesDegrees, x == maximum[b | (_, b) <- ci
     where citiesDegrees = [(city, fromIntegral (length (adjacent roadMap city))) | city <- cities roadMap]
 
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected roadMap = let allCities = cities roadMap
+    in case allCities of
+        []      -> True  -- Um grafo vazio é fortemente conexo
+        (c:_)   -> let reachable = reachableFrom roadMap c
+                   in all (`elem` reachable) allCities 
 
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath = undefined
@@ -62,3 +66,21 @@ gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2",
 
 gTest3 :: RoadMap -- unconnected graph
 gTest3 = [("0","1",4),("2","3",2)]
+
+test :: RoadMap -> City -> [City]
+test roadMap = undefined
+
+--type Graph = [(City,[City],Bool)]
+
+-- Função auxiliar para encontrar todas as cidades acessíveis a partir de uma cidade inicial
+reachableFrom :: RoadMap -> City -> [City]
+reachableFrom roadMap start = dfs roadMap [start] []
+
+-- Implementação de DFS para percorrer o grafo e encontrar cidades acessíveis
+dfs :: RoadMap -> [City] -> [City] -> [City]
+dfs _ [] visited = visited
+dfs roadMap (c:cs) visited
+    | c `elem` visited = dfs roadMap cs visited  -- Cidade já visitada, continuar
+    | otherwise = dfs roadMap (adjacentCities ++ cs) (c:visited)
+    where
+        adjacentCities = [neighbor | (neighbor, _) <- adjacent roadMap c]
