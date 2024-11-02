@@ -2,6 +2,7 @@ import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
 
+
 -- PFL 2024/2025 Practical assignment 1
 
 -- Uncomment the some/all of the first three lines to import the modules, do not change the code of these lines.
@@ -75,8 +76,25 @@ travelSales :: RoadMap -> Path
 travelSales = undefined
 
 tspBruteForce :: RoadMap -> Path
-tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
+tspBruteForce roadmap =
+    let cityList = cities roadmap
+        startCity = head cityList  -- Use the first city as the starting point
+        -- Generate all permutations of cities except the starting city to ensure round-trip routes
+        allRoutes = [startCity : route ++ [startCity] | route <- Data.List.permutations (tail cityList)]
+        -- Calculate distances for valid routes and filter out any invalid routes (i.e., Nothing distances)
+        validRoutes = [(route, pathDistance roadmap route) | route <- allRoutes]
+        -- Filter to only include routes with valid distances
+        validDistances = [(route, d) | (route, Just d) <- validRoutes]
+    in case validDistances of
+        [] -> []  -- Return an empty path if no valid routes are found
+        _  -> fst $ findMinDistance validDistances
 
+-- Helper function to find the route with the minimum distance
+findMinDistance :: [(Path, Distance)] -> (Path, Distance)
+findMinDistance (x:xs) = foldl minByDistance x xs
+  where
+    minByDistance acc@(route1, dist1) current@(route2, dist2) =
+        if dist2 < dist1 then current else acc
 -- Some graphs to test your work
 gTest1 :: RoadMap
 gTest1 = [("7","6",1),("8","2",2),("6","5",2),("0","1",4),("2","5",4),("8","6",6),("2","3",7),("7","8",7),("0","7",8),("1","2",8),("3","4",9),("5","4",10),("1","7",11),("3","5",14)]
@@ -86,3 +104,9 @@ gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2",
 
 gTest3 :: RoadMap -- unconnected graph
 gTest3 = [("0","1",4),("2","3",2)]
+
+gTest4 :: RoadMap
+gTest4 = [("A", "B", 5), ("A", "C", 10), ("A", "D", 8), ("A", "E", 15),
+          ("B", "C", 7), ("B", "D", 12), ("B", "E", 9),
+          ("C", "D", 4), ("C", "E", 11),
+          ("D", "E", 6)]
