@@ -75,7 +75,6 @@ filterMinPaths paths roadMap =
               in [path | path <- paths, pathDistance roadMap path == Just minDist]
 
 
-
 travelSales :: RoadMap -> Path
 travelSales = undefined
 
