@@ -1,7 +1,6 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
-import qualified Data.Array as Array
 
 
 -- PFL 2024/2025 Practical assignment 1
@@ -143,7 +142,6 @@ findMinDistance (x:xs) = foldl minByDistance x xs
 
 
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
-
 
 -- Function to create the adjacency matrix from a list of cities and the roadmap
 createAdjMatrix :: [City] -> RoadMap -> AdjMatrix
