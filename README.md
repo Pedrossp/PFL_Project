@@ -9,4 +9,4 @@ Group T06_G04
 - Pedro Pedro:
 - Renata Simão:
 
-## Implementação da função shortestPath e travelSales
+## Implementação das funções shortestPath e travelSales
