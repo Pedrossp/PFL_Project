@@ -11,20 +11,15 @@ Group T06_G04
 
 ## Implementação da Função shortestPath
 ### Definição da Função
-A função shortestPath inicia-se verificando se a cidade de partida é a mesma que a cidade de chegada. Se for, retorna uma lista contendo apenas essa cidade, pois não há necessidade de percorrer o mapa. 
-No caso em que as cidades são diferentes, a função utiliza a busca em largura (BFS) para encontrar todos os caminhos possíveis entre as duas cidades e, em seguida, filtra os caminhos encontrados para identificar os de menor distância.
-
+A função shortestPath foi criada para encontrar todos os caminhos mais curtos entre duas cidades num mapa representado como um grafo. Primeiro, a função verifica se a cidade de partida é a mesma que a cidade de destino. Se for, não há necessidade de percorrer o mapa, pois o caminho mais curto é apenas essa própria cidade, e a função devolve uma lista com a mesma. Caso contrário, a função aplica o algoritmo de busca em largura (BFS) para explorar todos os possíveis caminhos entre as cidades e, no final, filtra esses caminhos e identifica aqueles que têm a menor distância.
 
 ### Algoritmo Utilizado - Busca em Largura (BFS)
-
-A busca em largura é utilizada para explorar todos os caminhos possíveis a partir da cidade de partida até encontrar a cidade de destino. O algoritmo funciona utilizando uma fila de caminhos, iniciando com o caminho que contém apenas a cidade de partida. À medida que percorre a fila, explora cada caminho atual, adicionando novos caminhos baseados nas cidades adjacentes à cidade atual. Essa abordagem assegura que todos os caminhos são considerados, evitando ciclos.
+Para encontrar todos os caminhos mais curtos, é utilizado o algoritmo de Busca em Largura (BFS). A BFS explora os caminhos pouco a pouco, expandindo um nível de cada vez e garantindo que encontra sempre os caminhos mais curtos primeiro. A função começa com uma fila de caminhos, onde cada caminho é uma lista de cidades, iniciada apenas com a cidade de partida. À medida que a BFS expande, ela acrescenta à fila novos caminhos com base nas cidades adjacentes à cidade atual, formando um novo caminho ao adicionar essa cidade ao final da lista. Esta abordagem é eficaz para evitar ciclos e assegurar que todos os caminhos viáveis até à cidade de destino sejam considerados de maneira sistemática.
 
 #### Filtragem de Caminhos de Menor Distância
-
-Após a execução da BFS, é utilizada uma função de filtragem para selecionar apenas os caminhos que possuem a menor distância. Esta filtragem é realizada ao calcular a distância de cada caminho e identificar qual é a mínima. Com isso, a função retorna apenas os caminhos que correspondem a essa distância mínima.
+Após a execução da BFS, recorremos a uma função de filtragem para seleccionar apenas os caminhos que têm a menor distância total entre a cidade de partida e a cidade de destino. Para isso, calcula-se a distância de cada caminho encontrado e identifica-se o valor mínimo. Em seguida, são seleccionados apenas os caminhos que correspondem a essa distância mínima, garantindo que todos os caminhos mais curtos possíveis sejam incluídos na resposta final. Desta forma, a função devolve uma lista com todos os caminhos que correspondem a essa distância mínima.
 
 ### Justificação das Estruturas de Dados Auxiliares
-A utilização de listas para armazenar os caminhos permite uma manipulação simples e eficiente durante a busca. Além disso, a lista de distâncias é criada a partir da aplicação da função que calcula a distância de cada caminho. O uso de listas possibilita obter facilmente a distância mínima e filtrar os caminhos correspondentes.
-
+A escolha de listas para representar os caminhos durante a execução do BFS facilita a manipulação dos dados, permitindo adicionar e expandir caminhos de maneira simples e eficiente. Em cada iteração, a lista de caminhos é atualizada com as cidades adjacentes, permitindo manter o controlo sobre quais caminhos já foram explorados e quais ainda estão em expansão. Adicionalmente, ao utilizar listas para armazenar as distâncias dos caminhos, é possível calcular rapidamente a menor distância e realizar a filtragem necessária para seleccionar apenas os caminhos mínimos.
 
 ## Implementação da Função TravelSales
