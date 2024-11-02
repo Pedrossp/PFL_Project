@@ -140,3 +140,67 @@ findMinDistance (x:xs) = foldl minByDistance x xs
   where
     minByDistance acc@(route1, dist1) current@(route2, dist2) =
         if dist2 < dist1 then current else acc
+
+
+type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
+
+
+-- Function to create the adjacency matrix from a list of cities and the roadmap
+createAdjMatrix :: [City] -> RoadMap -> AdjMatrix
+createAdjMatrix [] _ = Data.Array.array ((0, 0), (-1, -1)) []
+createAdjMatrix _ [] = Data.Array.array ((0, 0), (-1, -1)) []
+createAdjMatrix cityList roadmap =
+    Data.Array.array bounds [((i, j), distance i j) | i <- [0 .. cityCount - 1], j <- [0 .. cityCount - 1]]
+  where
+    cityCount = length cityList
+    bounds = ((0, 0), (cityCount - 1, cityCount - 1))
+    roadMapPairs = [((c1, c2), d) | (c1, c2, d) <- roadmap] ++ [((c2, c1), d) | (c1, c2, d) <- roadmap]
+
+    -- Searches for the distance between two cities by their indices in the city list
+    distance :: Int -> Int -> Maybe Distance
+    distance i j = lookup (cityList !! i, cityList !! j) roadMapPairs
+
+
+-- Main function to solve the Traveling Salesman Problem
+travelSales :: RoadMap -> Path
+travelSales roadmap
+  | null cityList = []
+  | otherwise = case result of
+      Nothing -> []  -- If no valid TSP path exists
+      Just (_, path) -> map (cityList !!) (0 : path) -- Start at city 0 and follow the path
+  where
+    cityList = cities roadmap -- Retrieve all cities from the roadmap
+    cityCount = length cityList -- Number of cities
+    adjMatrix = createAdjMatrix cityList roadmap -- Create adjacency matrix
+
+    -- Memoization table for dynamic programming (using (Distance, Path) tuples)
+    memoTable = Data.Array.array ((0, 0), (2 ^ cityCount - 1, cityCount - 1)) [((mask, pos), dp mask pos) | mask <- [0 .. 2 ^ cityCount - 1], pos <- [0 .. cityCount - 1]] 
+
+    -- Dynamic programming function with bitmasking
+    dp :: Int -> Int -> Maybe (Distance, [Int]) -- (Distance, Path)
+    dp mask pos
+      | mask == (1 `Data.Bits.shiftL` cityCount) - 1 = case adjMatrix Data.Array.! (pos, 0) of
+          Just dist -> Just (dist, [0])  -- Return to the starting city
+          Nothing -> Nothing
+      | otherwise = Data.List.minimumBy compareDistance validOptions
+      where
+        compareDistance :: Maybe (Distance, [Int]) -> Maybe (Distance, [Int]) -> Ordering
+        compareDistance Nothing _ = GT -- Ignore invalid options
+        compareDistance _ Nothing = LT -- Ignore invalid options
+        compareDistance (Just (dist1, _)) (Just (dist2, _)) = compare dist1 dist2
+
+        validOptions = [ do
+          nextDist <- adjMatrix Data.Array.! (pos, next) -- Distance to the next city
+          case memoTable Data.Array.! (mask Data.Bits..|. (1 `Data.Bits.shiftL` next), next) of
+              Just (existingDist, existingPath) -> Just (nextDist + existingDist, next : existingPath) -- Combine distance and update path
+              Nothing -> Nothing
+          | next <- [0 .. cityCount - 1], -- Iterate over all cities
+            not (Data.Bits.testBit mask next), -- Check if the city is not visited
+            next /= pos -- Check if the city is not the current city
+          ]
+
+    -- Retrieve the result from the memoization table
+    result = memoTable Data.Array.! (1, 0)
+
+
+    
