@@ -1,6 +1,7 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
+import Data.Maybe
 
 
 -- PFL 2024/2025 Practical assignment 1
@@ -87,6 +88,32 @@ gTest4 = [("A", "B", 5), ("A", "C", 10), ("A", "D", 8), ("A", "E", 15),
           ("B", "C", 7), ("B", "D", 12), ("B", "E", 9),
           ("C", "D", 4), ("C", "E", 11),
           ("D", "E", 6)]
+
+gTest5 :: RoadMap
+gTest5 = [("A", "B", 5), ("A", "C", 10), ("B", "C", 2), ("B", "D", 1), ("C", "D", 3)]
+
+gTestLarger :: RoadMap
+gTestLarger = 
+  [ ("A", "B", 10)
+  , ("A", "C", 15)
+  , ("A", "D", 20)
+  , ("A", "E", 25)
+  , ("B", "C", 35)
+  , ("B", "D", 25)
+  , ("B", "E", 10)
+  , ("C", "D", 30)
+  , ("C", "E", 5)
+  , ("D", "E", 15)
+  , ("C", "F", 20)
+  , ("D", "F", 10)
+  , ("E", "F", 5)
+  , ("F", "G", 15)
+  , ("F", "H", 10)
+  , ("G", "H", 20)
+  , ("A", "G", 50)
+  , ("B", "H", 40)
+  ]
+
 test :: RoadMap -> City -> [City]
 test roadMap = undefined
 
@@ -143,62 +170,132 @@ findMinDistance (x:xs) = foldl minByDistance x xs
 
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 
--- Function to create the adjacency matrix from a list of cities and the roadmap
+-- Create the adjacency matrix from a list of cities and the roadmap
 createAdjMatrix :: [City] -> RoadMap -> AdjMatrix
-createAdjMatrix [] _ = Data.Array.array ((0, 0), (-1, -1)) []
-createAdjMatrix _ [] = Data.Array.array ((0, 0), (-1, -1)) []
-createAdjMatrix cityList roadmap =
-    Data.Array.array bounds [((i, j), distance i j) | i <- [0 .. cityCount - 1], j <- [0 .. cityCount - 1]]
+createAdjMatrix cities roadmap =
+    Data.Array.array bounds [((i, j), lookupDistance i j) | i <- [0 .. cityCount - 1], j <- [0 .. cityCount - 1]]
   where
-    cityCount = length cityList
+    cityCount = length cities
     bounds = ((0, 0), (cityCount - 1, cityCount - 1))
+
+    -- Gerar pares para ambas as direções
     roadMapPairs = [((c1, c2), d) | (c1, c2, d) <- roadmap] ++ [((c2, c1), d) | (c1, c2, d) <- roadmap]
 
-    -- Searches for the distance between two cities by their indices in the city list
-    distance :: Int -> Int -> Maybe Distance
-    distance i j = lookup (cityList !! i, cityList !! j) roadMapPairs
+    -- Procurar a distância entre duas cidades pelos seus índices
+    lookupDistance :: Int -> Int -> Maybe Distance
+    lookupDistance i j = lookup (cities !! i, cities !! j) roadMapPairs
 
-
--- Main function to solve the Traveling Salesman Problem
+-- Função principal para resolver o Problema do Caixeiro Viajante
 travelSales :: RoadMap -> Path
 travelSales roadmap
-  | null cityList = []
-  | otherwise = case result of
-      Nothing -> []  -- If no valid TSP path exists
-      Just (_, path) -> map (cityList !!) (0 : path) -- Start at city 0 and follow the path
+  | null citiesList = []  -- Retornar um caminho vazio se não houver cidades
+  | otherwise = case finalResult of
+      Nothing -> []  -- Retornar um caminho vazio se não existir um caminho TSP válido
+      Just (_, path) -> map (citiesList !!) (0 : path) -- Começar pela cidade 0 e seguir o caminho calculado
   where
-    cityList = cities roadmap -- Retrieve all cities from the roadmap
-    cityCount = length cityList -- Number of cities
-    adjMatrix = createAdjMatrix cityList roadmap -- Create adjacency matrix
+    citiesList = cities roadmap -- Extrair todas as cidades do roadmap
+    adjMatrix = createAdjMatrix citiesList roadmap -- Construir a matriz de adjacência para distâncias
+    cityCount = length citiesList -- Contar o número de cidades
 
-    -- Memoization table for dynamic programming (using (Distance, Path) tuples)
-    memoTable = Data.Array.array ((0, 0), (2 ^ cityCount - 1, cityCount - 1)) [((mask, pos), dp mask pos) | mask <- [0 .. 2 ^ cityCount - 1], pos <- [0 .. cityCount - 1]] 
+    -- Tabela de memoização para programação dinâmica, armazenando tuplas (Distância, Caminho)
+    memoTable = Data.Array.array ((0, 0), (2 ^ cityCount - 1, cityCount - 1)) 
+                  [((mask, pos), computeDP mask pos) | mask <- [0 .. 2 ^ cityCount - 1], pos <- [0 .. cityCount - 1]]
 
-    -- Dynamic programming function with bitmasking
-    dp :: Int -> Int -> Maybe (Distance, [Int]) -- (Distance, Path)
-    dp mask pos
-      | mask == (1 `Data.Bits.shiftL` cityCount) - 1 = case adjMatrix Data.Array.! (pos, 0) of
-          Just dist -> Just (dist, [0])  -- Return to the starting city
-          Nothing -> Nothing
-      | otherwise = Data.List.minimumBy compareDistance validOptions
+    -- Função de programação dinâmica usando mascaramento de bits
+    computeDP :: Int -> Int -> Maybe (Distance, [Int]) -- (Distância, Caminho)
+    computeDP mask pos
+      | allVisited mask = returnToStart
+      | otherwise = findMinimum validOptions
       where
-        compareDistance :: Maybe (Distance, [Int]) -> Maybe (Distance, [Int]) -> Ordering
-        compareDistance Nothing _ = GT -- Ignore invalid options
-        compareDistance _ Nothing = LT -- Ignore invalid options
-        compareDistance (Just (dist1, _)) (Just (dist2, _)) = compare dist1 dist2
+        allVisited m = m == (1 `Data.Bits.shiftL` cityCount) - 1
+        returnToStart = case adjMatrix Data.Array.! (pos, 0) of
+                          Just dist -> Just (dist, [0])  -- Retornar à cidade inicial com a distância final
+                          Nothing -> Nothing
 
-        validOptions = [ do
-          nextDist <- adjMatrix Data.Array.! (pos, next) -- Distance to the next city
-          case memoTable Data.Array.! (mask Data.Bits..|. (1 `Data.Bits.shiftL` next), next) of
-              Just (existingDist, existingPath) -> Just (nextDist + existingDist, next : existingPath) -- Combine distance and update path
+        validOptions = [ 
+          let nextDist = adjMatrix Data.Array.! (pos, next) -- Obter a distância até a próxima cidade
+          in case nextDist of
+              Just distance -> do
+                  (existingDist, existingPath) <- memoTable Data.Array.! (mask Data.Bits..|. (1 `Data.Bits.shiftL` next), next)
+                  Just (distance + existingDist, next : existingPath) -- Combinar distâncias e atualizar o caminho
               Nothing -> Nothing
-          | next <- [0 .. cityCount - 1], -- Iterate over all cities
-            not (Data.Bits.testBit mask next), -- Check if the city is not visited
-            next /= pos -- Check if the city is not the current city
-          ]
+          | next <- [0 .. cityCount - 1], -- Iterar sobre todas as cidades
+            next /= pos, -- Garantir que a próxima cidade não seja a cidade atual
+            not (Data.Bits.testBit mask next) -- Garantir que a cidade não tenha sido visitada
+            ]
 
-    -- Retrieve the result from the memoization table
-    result = memoTable Data.Array.! (1, 0)
+    -- Obter o mínimo a partir das opções válidas
+    findMinimum :: [Maybe (Distance, [Int])] -> Maybe (Distance, [Int])
+    findMinimum opts =
+        let validOpts = [v | Just v <- opts]  -- Filtrar apenas os valores Just
+        in case validOpts of
+            [] -> Nothing  -- Retornar Nothing se não houver opções válidas
+            _  -> Just $ Data.List.minimumBy comparePaths validOpts
+
+    -- Função de comparação para as opções
+    comparePaths :: (Distance, [Int]) -> (Distance, [Int]) -> Ordering
+    comparePaths (dist1, _) (dist2, _) = compare dist1 dist2 -- Comparar as distâncias
+
+    -- Obter o resultado final da tabela de memoização
+    finalResult = memoTable Data.Array.! (1, 0)
 
 
-    
+    -- Grafo com 10 cidades
+gTestVeryLarge :: RoadMap
+gTestVeryLarge = 
+  [ ("A", "B", 10)
+  , ("A", "C", 15)
+  , ("A", "D", 20)
+  , ("A", "E", 25)
+  , ("A", "F", 30)
+  , ("B", "C", 35)
+  , ("B", "D", 25)
+  , ("B", "E", 40)
+  , ("B", "F", 20)
+  , ("C", "D", 30)
+  , ("C", "E", 5)
+  , ("C", "F", 20)
+  , ("D", "E", 15)
+  , ("D", "F", 10)
+  , ("E", "F", 5)
+  , ("A", "G", 50)
+  , ("B", "G", 45)
+  , ("C", "G", 40)
+  , ("D", "G", 35)
+  , ("E", "G", 30)
+  , ("F", "G", 25)
+  , ("G", "H", 30)
+  , ("H", "I", 20)
+  , ("I", "J", 15)
+  , ("H", "A", 25)
+  , ("I", "B", 35)
+  , ("J", "C", 30)
+  , ("J", "D", 20)
+  , ("J", "E", 10)
+  , ("J", "F", 5)
+  ]
+
+
+-- Grafo com 7 cidades
+gTestMedium :: RoadMap
+gTestMedium = 
+  [ ("A", "B", 10)
+  , ("A", "C", 15)
+  , ("A", "D", 20)
+  , ("A", "E", 30)
+  , ("B", "C", 35)
+  , ("B", "D", 25)
+  , ("B", "E", 20)
+  , ("C", "D", 30)
+  , ("C", "E", 5)
+  , ("C", "F", 25)
+  , ("D", "E", 15)
+  , ("D", "F", 20)
+  , ("E", "F", 10)
+  , ("F", "G", 30)
+  , ("G", "A", 50)
+  , ("G", "B", 40)
+  , ("G", "C", 35)
+  , ("G", "D", 30)
+  , ("G", "E", 25)
+  ]
