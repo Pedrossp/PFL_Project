@@ -46,7 +46,7 @@ A função travelSales foi desenvolvida para resolver o Problema do Caixeiro Via
 O uso de uma matriz de adjacência (adjMatrix) permite acesso direto às distâncias entre cidades, enquanto a tabela de memoização (memoTable) armazena resultados de subproblemas para evitar repetição de cálculos. A bitmask ajuda a representar estados de forma compacta, essencial para a eficiência deste algoritmo.
 
 ## Implementação da Função tspBruteForce (Força Bruta para o Problema do Caixeiro Viajante - TSP)
- função tspBruteForce resolve o TSP usando força bruta. Este método gera todas as permutações possíveis das cidades, calcula a distância total de cada percurso e seleciona o de menor distância. Este método é computacionalmente intensivo, uma vez que examina todos os percursos possíveis entre cidades, garantindo a descoberta da solução ótima. Tem complexidade 𝑂(n!), onde n é o número de cidades, tornando-o inviável para grafos grandes.
+ A função tspBruteForce resolve o TSP usando força bruta. Este método gera todas as permutações possíveis das cidades, calcula a distância total de cada percurso e seleciona o de menor distância. Este método é computacionalmente intensivo, uma vez que examina todos os percursos possíveis entre cidades, garantindo a descoberta da solução ótima. Tem complexidade 𝑂(n!), onde n é o número de cidades, tornando-o inviável para grafos grandes.
 
 ## Comparação entre Programação Dinâmica e Força Bruta para o TSP
 
