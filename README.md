@@ -22,4 +22,35 @@ Após a execução da BFS, recorremos a uma função de filtragem para seleccion
 ### Justificação das Estruturas de Dados Auxiliares
 A escolha de listas para representar os caminhos durante a execução do BFS facilita a manipulação dos dados, permitindo adicionar e expandir caminhos de maneira simples e eficiente. Em cada iteração, a lista de caminhos é atualizada com as cidades adjacentes, permitindo manter o controlo sobre quais caminhos já foram explorados e quais ainda estão em expansão. Adicionalmente, ao utilizar listas para armazenar as distâncias dos caminhos, é possível calcular rapidamente a menor distância e realizar a filtragem necessária para seleccionar apenas os caminhos mínimos.
 
-## Implementação da Função TravelSales
+## Implementação da Função TravelSales (Programação Dinâmica para o Problema do Caixeiro Viajante - TSP)
+### Definição da Função
+A função travelSales foi desenvolvida para resolver o Problema do Caixeiro Viajante (TSP) usando Programação Dinâmica (DP). Este método visa encontrar o percurso de menor custo que passa por todas as cidades do grafo uma vez e retorna ao ponto de partida.
+
+### Algoritmo Utilizado - Programação Dinâmica com Bitmasking
+
+#### 1. Pré-processamento:
+
+- citiesList extrai todas as cidades presentes no RoadMap, e cityCount representa o número total de cidades.
+- Cria-se uma matriz de adjacência (adjMatrix) para armazenar as distâncias entre pares de cidades, facilitando as consultas de distâncias.
+
+#### 2. Tabela de Memoização:
+
+- memoTable é uma tabela de memoização que armazena resultados de subproblemas. Cada entrada na memoTable é um tuplo representando a menor distância e o caminho correspondente para se alcançar uma cidade dada uma configuração específica de cidades visitadas.
+- Para otimizar a memória e eficiência, utiliza-se bitmasks para representar estados. Cada bit no bitmask indica se uma cidade foi visitada, permitindo o armazenamento de todos os estados numa única estrutura de dados.
+
+#### 3. Programação Dinâmica:
+
+- A função computeDP resolve subproblemas recursivamente, calculando a melhor rota para cada subconjunto de cidades e acumulando o custo mínimo. Ao reutilizar resultados armazenados na memoTable, evitam-se cálculos redundantes, melhorando a eficiência.
+
+### Justificação das Estruturas de Dados Auxiliares
+O uso de uma matriz de adjacência (adjMatrix) permite acesso direto às distâncias entre cidades, enquanto a tabela de memoização (memoTable) armazena resultados de subproblemas para evitar repetição de cálculos. A bitmask ajuda a representar estados de forma compacta, essencial para a eficiência deste algoritmo.
+
+## Implementação da Função tspBruteForce (Força Bruta para o Problema do Caixeiro Viajante - TSP)
+ função tspBruteForce resolve o TSP usando força bruta. Este método gera todas as permutações possíveis das cidades, calcula a distância total de cada percurso e seleciona o de menor distância. Este método é computacionalmente intensivo, uma vez que examina todos os percursos possíveis entre cidades, garantindo a descoberta da solução ótima. Tem complexidade 𝑂(n!), onde n é o número de cidades, tornando-o inviável para grafos grandes.
+
+## Comparação entre Programação Dinâmica e Força Bruta para o TSP
+
+- Programação Dinâmica: Com uma complexidade de 𝑂(n².2^n) ,este método é muito mais rápido do que a força bruta para grafos maiores. A memoização e as operações bitwise permitem que a programação dinâmica resolva o problema com um custo computacional significativamente menor.
+
+- Força Bruta: Com uma complexidade 𝑂(n!) a força bruta torna-se rapidamente impraticável à medida que o número de cidades aumenta, devido ao crescimento exponencial do número de percursos a considerar.
+

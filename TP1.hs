@@ -65,57 +65,62 @@ shortestPath roadMap start end
 
 --9. Tsp DynammicProgramming
 travelSales :: RoadMap -> Path
-travelSales roadmap
-  | null citiesList = []  -- Retornar um caminho vazio se não houver cidades
-  | otherwise = case finalResult of
-      Nothing -> []  -- Retornar um caminho vazio se não existir um caminho TSP válido
-      Just (_, path) -> map (citiesList !!) (0 : path) -- Começar pela cidade 0 e seguir o caminho calculado
-  where
-    citiesList = cities roadmap -- Extrair todas as cidades do roadmap
-    adjMatrix = createAdjMatrix citiesList roadmap -- Construir a matriz de adjacência para distâncias
-    cityCount = length citiesList -- Contar o número de cidades
+travelSales roadmap =
+  let citiesList = cities roadmap                            -- Extrair todas as cidades do roadmap
+      cityCount = length citiesList                          -- Contar o número de cidades
 
-    -- Tabela de memoização para programação dinâmica, armazenando tuplas (Distância, Caminho)
-    memoTable = Data.Array.array ((0, 0), (2 ^ cityCount - 1, cityCount - 1)) 
-                  [((mask, pos), computeDP mask pos) | mask <- [0 .. 2 ^ cityCount - 1], pos <- [0 .. cityCount - 1]]
+      -- Caso de grafo vazio
+      finalPath
+        | cityCount == 0 = []                                -- Retorna caminho vazio se não houver cidades
+        | otherwise =
+            let adjMatrix = createAdjacencyMatrix citiesList roadmap  -- Construir a matriz de adjacência para distâncias
 
-    -- Função de programação dinâmica usando mascaramento de bits
-    computeDP :: Int -> Int -> Maybe (Distance, [Int]) -- (Distância, Caminho)
-    computeDP mask pos
-      | allVisited mask = returnToStart
-      | otherwise = findMinimum validOptions
-      where
-        allVisited m = m == (1 `Data.Bits.shiftL` cityCount) - 1
-        returnToStart = case adjMatrix Data.Array.! (pos, 0) of
-                          Just dist -> Just (dist, [0])  -- Retornar à cidade inicial com a distância final
+                -- Tabela de memoização para programação dinâmica, armazenando tuplas (Distância, Caminho)
+                memoTable = Data.Array.array ((0, 0), (2 ^ cityCount - 1, cityCount - 1)) 
+                              [((mask, pos), computeDP mask pos) | mask <- [0 .. 2 ^ cityCount - 1], pos <- [0 .. cityCount - 1]]
+
+                -- Função de programação dinâmica usando mascaramento de bits
+                computeDP :: Int -> Int -> Maybe (Distance, [Int])   -- (Distância, Caminho)
+                computeDP mask pos
+                  | allVisited mask = returnToStart
+                  | otherwise = findMinimum validOptions
+                  where
+                    allVisited m = m == (1 `Data.Bits.shiftL` cityCount) - 1
+                    returnToStart = case adjMatrix Data.Array.! (pos, 0) of
+                                      Just dist -> Just (dist, [0])  -- Retornar à cidade inicial com a distância final
+                                      Nothing -> Nothing
+
+                    validOptions = [ 
+                      let nextDist = adjMatrix Data.Array.! (pos, next)
+                      in case nextDist of
+                          Just distance -> do
+                              (existingDist, existingPath) <- memoTable Data.Array.! (mask Data.Bits..|. (1 `Data.Bits.shiftL` next), next)
+                              Just (distance + existingDist, next : existingPath)
                           Nothing -> Nothing
+                      | next <- [0 .. cityCount - 1], 
+                        next /= pos, 
+                        not (Data.Bits.testBit mask next) 
+                      ]
 
-        validOptions = [ 
-          let nextDist = adjMatrix Data.Array.! (pos, next) -- Obter a distância até a próxima cidade
-          in case nextDist of
-              Just distance -> do
-                  (existingDist, existingPath) <- memoTable Data.Array.! (mask Data.Bits..|. (1 `Data.Bits.shiftL` next), next)
-                  Just (distance + existingDist, next : existingPath) -- Combinar distâncias e atualizar o caminho
-              Nothing -> Nothing
-          | next <- [0 .. cityCount - 1], -- Iterar sobre todas as cidades
-            next /= pos, -- Garantir que a próxima cidade não seja a cidade atual
-            not (Data.Bits.testBit mask next) -- Garantir que a cidade não tenha sido visitada
-            ]
+                -- Função auxiliar para obter o mínimo a partir das opções válidas
+                findMinimum :: [Maybe (Distance, [Int])] -> Maybe (Distance, [Int])
+                findMinimum opts =
+                    let validOpts = [v | Just v <- opts]   -- Filtrar apenas os valores Just
+                    in case validOpts of
+                        [] -> Nothing                      -- Retornar Nothing se não houver opções válidas
+                        _  -> Just $ Data.List.minimumBy comparePaths validOpts
 
-    -- Obter o mínimo a partir das opções válidas
-    findMinimum :: [Maybe (Distance, [Int])] -> Maybe (Distance, [Int])
-    findMinimum opts =
-        let validOpts = [v | Just v <- opts]  -- Filtrar apenas os valores Just
-        in case validOpts of
-            [] -> Nothing  -- Retornar Nothing se não houver opções válidas
-            _  -> Just $ Data.List.minimumBy comparePaths validOpts
+                -- Função de comparação para as opções
+                comparePaths :: (Distance, [Int]) -> (Distance, [Int]) -> Ordering
+                comparePaths (dist1, _) (dist2, _) = compare dist1 dist2
 
-    -- Função de comparação para as opções
-    comparePaths :: (Distance, [Int]) -> (Distance, [Int]) -> Ordering
-    comparePaths (dist1, _) (dist2, _) = compare dist1 dist2 -- Comparar as distâncias
+                -- Obter o resultado final da tabela de memoização
+                finalResult = memoTable Data.Array.! (1, 0)
 
-    -- Obter o resultado final da tabela de memoização
-    finalResult = memoTable Data.Array.! (1, 0)
+            in case finalResult of
+                Nothing -> []
+                Just (_, path) -> map (citiesList !!) (0 : path)
+  in finalPath
 
 --10. TSP Brute Force 
 tspBruteForce :: RoadMap -> Path
@@ -187,8 +192,8 @@ findMinDistance (x:xs) = foldl minByDistance x xs
 --Usada no 9.TravelSales
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 
-createAdjMatrix :: [City] -> RoadMap -> AdjMatrix
-createAdjMatrix citiesList roadMap = Data.Array.array ((0, 0), (n-1, n-1)) elements
+createAdjacencyMatrix :: [City] -> RoadMap -> AdjMatrix
+createAdjacencyMatrix citiesList roadMap = Data.Array.array ((0, 0), (n-1, n-1)) elements
   where
     n = length citiesList
     cityIndex = zip citiesList [0..]  -- Associa cada cidade a um índice numérico
@@ -214,7 +219,7 @@ gTest2 :: RoadMap
 gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2","3",30)]
 
 gTest3 :: RoadMap -- unconnected graph
-gTest3 = [("0","1",4),("2","3",2)]
+gTest3 = []
 
 gTest4 :: RoadMap
 gTest4 = [("A", "B", 5), ("A", "C", 10), ("A", "D", 8), ("A", "E", 15),
