@@ -5,9 +5,9 @@ Group T06_G04
 - Renata Simão, up202205124
 
 #### Distribuição do trabalho
-- Eduardo Santos: Realizaçao das funções 4, 5, 8 (35%)
-- Pedro Pedro: Realizaçao das funções 2, 3, 7 (35%)
-- Renata Simão: Realizaçao das funções 1, 6 (30%)
+- Eduardo Santos: Realização das funções 4, 5, 8 (35%)
+- Pedro Pedro: Realização das funções 2, 3, 7 (35%)
+- Renata Simão: Realização das funções 1, 6 (30%)
 - Funções 9 e 10 feitas em conjunto
 
 ## Implementação da Função shortestPath
