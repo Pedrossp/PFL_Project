@@ -187,21 +187,23 @@ findMinDistance (x:xs) = foldl minByDistance x xs
 --Usada no 9.TravelSales
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 
--- Create the adjacency matrix from a list of cities and the roadmap
 createAdjMatrix :: [City] -> RoadMap -> AdjMatrix
-createAdjMatrix cities roadmap =
-    Data.Array.array bounds [((i, j), lookupDistance i j) | i <- [0 .. cityCount - 1], j <- [0 .. cityCount - 1]]
+createAdjMatrix citiesList roadMap = Data.Array.array ((0, 0), (n-1, n-1)) elements
   where
-    cityCount = length cities
-    bounds = ((0, 0), (cityCount - 1, cityCount - 1))
+    n = length citiesList
+    cityIndex = zip citiesList [0..]  -- Associa cada cidade a um índice numérico
+    indexToCityList = [(idx, city) | (city, idx) <- cityIndex]  -- Lista invertida
 
-    -- Gerar pares para ambas as direções
-    roadMapPairs = [((c1, c2), d) | (c1, c2, d) <- roadmap] ++ [((c2, c1), d) | (c1, c2, d) <- roadmap]
+    -- Função auxiliar simples para converter um índice numérico em uma cidade
+    indexToCity idx = lookup idx indexToCityList
 
-    -- Procurar a distância entre duas cidades pelos seus índices
-    lookupDistance :: Int -> Int -> Maybe Distance
-    lookupDistance i j = lookup (cities !! i, cities !! j) roadMapPairs
+    elements = [((i, j), distanceBetween i j) | i <- [0..n-1], j <- [0..n-1]]
 
+    -- Função que retorna a distância entre duas cidades, se existir
+    distanceBetween i j =
+      case (indexToCity i, indexToCity j) of
+        (Just city1, Just city2) -> distance roadMap city1 city2
+        _                        -> Nothing
 
 
 -- Some graphs to test your work
